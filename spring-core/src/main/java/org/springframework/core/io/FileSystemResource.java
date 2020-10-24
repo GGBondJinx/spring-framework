@@ -16,25 +16,18 @@
 
 package org.springframework.core.io;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
+
+import java.io.*;
 import java.net.URI;
 import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-
-import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
+import java.nio.file.*;
 
 /**
  * {@link Resource} implementation for {@code java.io.File} and
@@ -54,6 +47,9 @@ import org.springframework.util.StringUtils;
  * @see #FileSystemResource(Path)
  * @see java.io.File
  * @see java.nio.file.Files
+ *
+ * 对 java.io.File 类型资源的封装，只要是跟 File 打交道的，基本上也可以与 FileSystemResource 打交道。
+ * 支持文件和 URL 的形式，实现 WritableResource 接口，且从 Spring Framework5.0 开始，FileSystemResource 使用 NIO2 API 进行读/写交互
  */
 public class FileSystemResource extends AbstractResource implements WritableResource {
 

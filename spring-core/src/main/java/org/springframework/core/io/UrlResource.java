@@ -16,20 +16,15 @@
 
 package org.springframework.core.io;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLConnection;
-
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ResourceUtils;
 import org.springframework.util.StringUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.*;
 
 /**
  * {@link Resource} implementation for {@code java.net.URL} locators.
@@ -39,6 +34,9 @@ import org.springframework.util.StringUtils;
  * @author Juergen Hoeller
  * @since 28.12.2003
  * @see java.net.URL
+ *
+ * 对 java.net.URL 类型资源的封装。
+ * 内部委派 URL 进行具体资源的操作。
  */
 public class UrlResource extends AbstractFileResolvingResource {
 
