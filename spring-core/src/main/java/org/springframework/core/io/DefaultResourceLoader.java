@@ -16,6 +16,12 @@
 
 package org.springframework.core.io;
 
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
+import org.springframework.util.ResourceUtils;
+import org.springframework.util.StringUtils;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
@@ -23,12 +29,6 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
-import org.springframework.util.ResourceUtils;
-import org.springframework.util.StringUtils;
 
 /**
  * Default implementation of the {@link ResourceLoader} interface.
@@ -44,6 +44,8 @@ import org.springframework.util.StringUtils;
  * @since 10.03.2004
  * @see FileSystemResourceLoader
  * @see org.springframework.context.support.ClassPathXmlApplicationContext
+ *
+ * 是 ResourceLoader 的默认实现。
  */
 public class DefaultResourceLoader implements ResourceLoader {
 
@@ -60,6 +62,9 @@ public class DefaultResourceLoader implements ResourceLoader {
 	 * <p>ClassLoader access will happen using the thread context class loader
 	 * at the time of this ResourceLoader's initialization.
 	 * @see java.lang.Thread#getContextClassLoader()
+	 *
+	 * 不带参数的构造函数，使用的 ClassLoader 为默认的 ClassLoader （ 一般是
+	 * Thread.currentThread()#getContextClassLoader() ）。
 	 */
 	public DefaultResourceLoader() {
 		this.classLoader = ClassUtils.getDefaultClassLoader();
@@ -139,11 +144,18 @@ public class DefaultResourceLoader implements ResourceLoader {
 		this.resourceCaches.clear();
 	}
 
-
+	/**
+	 * ResourceLoader 中最核心的方法就是 #getResource(String location)，它根据提供的 location 返回相应的 Resource。
+	 * 而 DefaultResourceLoader 对该方法提供了核心实现，因为它的两个子类都没有提供覆写该方法，
+	 * 所以可以断定 ResourceLoader 的资源加载策略就封装在 DefaultResourceLoader 中
+	 * @param location the resource location
+	 * @return
+	 */
 	@Override
 	public Resource getResource(String location) {
 		Assert.notNull(location, "Location must not be null");
 
+		// 首先，通过 ProtocolResolver 来加载资源，成功则返回 Resource
 		for (ProtocolResolver protocolResolver : getProtocolResolvers()) {
 			Resource resource = protocolResolver.resolve(location, this);
 			if (resource != null) {
@@ -151,12 +163,16 @@ public class DefaultResourceLoader implements ResourceLoader {
 			}
 		}
 
+		// 其次，若以 / 开头，调用 #getResourceByPath() 方法，构造 ClassPathContextResource 类型的资源并返回
 		if (location.startsWith("/")) {
 			return getResourceByPath(location);
 		}
+		// 再次，若以 classpath: 开头，则构造 ClassPathResource 类型的资源并返回。在构造该资源时，通过 #getClassLoader() 获取当前的 ClassLoader
 		else if (location.startsWith(CLASSPATH_URL_PREFIX)) {
 			return new ClassPathResource(location.substring(CLASSPATH_URL_PREFIX.length()), getClassLoader());
 		}
+		// 然后，构造 URL，尝试通过它进行资源定位，若没有抛出 MalformedURLException 异常，则判断是否为 FileURL，
+		// 如果是则构造 FileURLResource 类型的资源，否则构造 UrlResource 类型的资源
 		else {
 			try {
 				// Try to parse the location as a URL...
@@ -164,6 +180,7 @@ public class DefaultResourceLoader implements ResourceLoader {
 				return (ResourceUtils.isFileURL(url) ? new FileUrlResource(url) : new UrlResource(url));
 			}
 			catch (MalformedURLException ex) {
+				// 最后，若加载过程中抛出 MalformedURLException 异常，则调用 #getResourceByPath() 方法，实现资源定位加载
 				// No URL -> resolve as resource path.
 				return getResourceByPath(location);
 			}

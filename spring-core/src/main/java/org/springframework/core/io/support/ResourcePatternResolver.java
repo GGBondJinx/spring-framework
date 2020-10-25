@@ -16,10 +16,10 @@
 
 package org.springframework.core.io.support;
 
-import java.io.IOException;
-
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
+
+import java.io.IOException;
 
 /**
  * Strategy interface for resolving a location pattern (for example,
@@ -50,6 +50,11 @@ import org.springframework.core.io.ResourceLoader;
  * @see org.springframework.core.io.ResourceLoader
  * @see org.springframework.context.ApplicationContext
  * @see org.springframework.context.ResourceLoaderAware
+ *
+ * ResourceLoader 的 #getResource(String location) 方法，每次只能根据 location 返回一个 Resource。
+ * 当需要加载多个资源时，除了多次调用 #getResource(String location) 方法外，别无他法
+ * ResourcePatternResolver 是 ResourceLoader 的扩展，它支持根据指定的资源路径匹配模式每次返回多个 Resource 实例,
+ * 同时，也新增了一种新的协议前缀 "classpath*:"，该协议前缀由其子类负责实现
  */
 public interface ResourcePatternResolver extends ResourceLoader {
 
@@ -70,6 +75,8 @@ public interface ResourcePatternResolver extends ResourceLoader {
 	 * @param locationPattern the location pattern to resolve
 	 * @return the corresponding Resource objects
 	 * @throws IOException in case of I/O errors
+	 *
+	 *
 	 */
 	Resource[] getResources(String locationPattern) throws IOException;
 
