@@ -116,6 +116,9 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 
 	private DocumentLoader documentLoader = new DefaultDocumentLoader();
 
+	/**
+	 * EntityResolver 解析器
+	 */
 	@Nullable
 	private EntityResolver entityResolver;
 
@@ -263,15 +266,19 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	/**
 	 * Return the EntityResolver to use, building a default resolver
 	 * if none specified.
+	 * 返回指定的解析器，如果没有指定，则构造一个未指定的默认解析器
 	 */
 	protected EntityResolver getEntityResolver() {
 		if (this.entityResolver == null) {
 			// Determine default EntityResolver to use.
 			ResourceLoader resourceLoader = getResourceLoader();
 			if (resourceLoader != null) {
+				// resourceLoader 不为 null，则根据指定的 ResourceLoader 创建一个 ResourceEntityResolver 对象
 				this.entityResolver = new ResourceEntityResolver(resourceLoader);
 			}
 			else {
+				// 如果 resourceLoader 为 null，则创建一个 DelegatingEntityResolver 对象，该 Resolver 委托给默认的
+				// BeansDtdResolver 和 PluggableSchemaResolver
 				this.entityResolver = new DelegatingEntityResolver(getBeanClassLoader());
 			}
 		}
