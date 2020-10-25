@@ -16,14 +16,10 @@
 
 package org.springframework.util.xml;
 
-import java.io.BufferedReader;
-import java.io.CharConversionException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-
 import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
+
+import java.io.*;
 
 /**
  * Detects whether an XML stream is using DTD- or XSD-based validation.
@@ -32,6 +28,8 @@ import org.springframework.util.StringUtils;
  * @author Juergen Hoeller
  * @author Sam Brannen
  * @since 2.0
+ *
+ * XML 验证模式探测器
  */
 public class XmlValidationModeDetector {
 
@@ -92,27 +90,34 @@ public class XmlValidationModeDetector {
 		// Peek into the file to look for DOCTYPE.
 		BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 		try {
+			// 是否为 DTD 校验模式，默认为 XSD 模式
 			boolean isDtdValidated = false;
 			String content;
+			// 循环，逐行读取 XML 文件内容
 			while ((content = reader.readLine()) != null) {
 				content = consumeCommentTokens(content);
+				// 如果是注释或者空则跳过
 				if (this.inComment || !StringUtils.hasText(content)) {
 					continue;
 				}
+				// 包含 "DOCTYPE" 为 DTD 模式
 				if (hasDoctype(content)) {
 					isDtdValidated = true;
 					break;
 				}
+				// hasOpeningTag 方法会校验，如果这一行有 "<"，并且 "<" 后边跟着的是字母，则返回 true
 				if (hasOpeningTag(content)) {
 					// End of meaningful data...
 					break;
 				}
 			}
+			// 返回 VALIDATION_DTD or VALIDATION_XSD
 			return (isDtdValidated ? VALIDATION_DTD : VALIDATION_XSD);
 		}
 		catch (CharConversionException ex) {
 			// Choked on some character encoding...
 			// Leave the decision up to the caller.
+			// 返回 VALIDATION_AUTO 模式
 			return VALIDATION_AUTO;
 		}
 		finally {
@@ -138,8 +143,9 @@ public class XmlValidationModeDetector {
 			return false;
 		}
 		int openTagIndex = content.indexOf('<');
-		return (openTagIndex > -1 && (content.length() > openTagIndex + 1) &&
-				Character.isLetter(content.charAt(openTagIndex + 1)));
+		return (openTagIndex > -1 // 存在 '<'
+				&& (content.length() > openTagIndex + 1) // '<' 后边还有内容
+				&& Character.isLetter(content.charAt(openTagIndex + 1))); // 后边的内容是字母
 	}
 
 	/**
@@ -150,6 +156,7 @@ public class XmlValidationModeDetector {
 	@Nullable
 	private String consumeCommentTokens(String line) {
 		int indexOfStartComment = line.indexOf(START_COMMENT);
+		// 非注释
 		if (indexOfStartComment == -1 && !line.contains(END_COMMENT)) {
 			return line;
 		}
